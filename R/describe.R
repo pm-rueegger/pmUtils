@@ -26,8 +26,9 @@ describe_numeric <- function(x, na.rm=F, integer=F) {
 
 describe_integer <- function(x, ...)  describe_numeric(x, integer=T, ...)
 
-describe_values <- function(x) paste(
+describe_values <- function(x, na.rm=F) paste(
   data.frame(x=x) %>%
+    filter(!na.rm | !is.na(x)) %>%
     group_by(x) %>% summarise(n=length(x), total=nrow(.)) %>%
     mutate(x=paste0(x, ": ", n, " (", sprintf("%.0f%%", n/total*100), ")")) %>%
     pull(x),
@@ -81,6 +82,10 @@ stopifnot(
 stopifnot(
   describe_values(c("m", "m", "w")) ==
   "m: 2 (67%), w: 1 (33%)"
+)
+stopifnot(
+  describe_values(c("m", "m", "w", NA), na.rm=T) ==
+    "m: 2 (67%), w: 1 (33%)"
 )
 stopifnot(
   describe_flags("Ja", Eigenschaft1=c("Ja", "Nein"), Eigenschaft2=c("Ja", "Ja"))
