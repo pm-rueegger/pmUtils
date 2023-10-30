@@ -35,12 +35,16 @@ describe_values <- function(x, na.rm=F) paste(
   collapse=", "
 )
 
-describe_flags <- function(true_value, ...) {
+describe_flags <- function(true_value=T, na.rm=F, ...) {
   x <- list(...)
   names <- names(x)
   paste(sapply(names, function(name){
-    sums <- sum(x[[name]]==true_value)
-    total <- length(x[[name]])
+    sums <- sum(x[[name]]==true_value, na.rm=na.rm)
+    total <- ifelse(
+      na.rm,
+      sum(!is.na(x[[name]])),
+      length(x[[name]])
+    )
     paste0(name, ": ", sums, " (", sprintf("%.0f%%", sums/total*100), ")")
   }), collapse=", ")
 }
@@ -89,6 +93,10 @@ stopifnot(
 )
 stopifnot(
   describe_flags("Ja", Eigenschaft1=c("Ja", "Nein"), Eigenschaft2=c("Ja", "Ja"))
+  == "Eigenschaft1: 1 (50%), Eigenschaft2: 2 (100%)"
+)
+stopifnot(
+  describe_flags(na.rm=T, Eigenschaft1=c(T, F, NA), Eigenschaft2=c(NA, T, T))
   == "Eigenschaft1: 1 (50%), Eigenschaft2: 2 (100%)"
 )
 stopifnot(describe_count(c(T, F, F, F), F) == "3 (75%)")
