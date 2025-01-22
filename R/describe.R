@@ -26,14 +26,21 @@ describe_numeric <- function(x, na.rm=F, integer=F) {
 
 describe_integer <- function(x, ...)  describe_numeric(x, integer=T, ...)
 
-describe_values <- function(x, na.rm=F) paste(
-  data.frame(x=x) %>%
-    filter(!na.rm | !is.na(x)) %>%
-    group_by(x) %>% summarise(n=length(x), total=nrow(.)) %>%
-    mutate(x=paste0(x, ": ", n, " (", sprintf("%.0f%%", n/total*100), ")")) %>%
-    pull(x),
-  collapse=", "
-)
+describe_values <- function(x, na.rm=F) {
+  na_count <- sum(is.na(x))
+  result <- paste(
+    data.frame(x=x) %>%
+      filter(!na.rm | !is.na(x)) %>%
+      group_by(x) %>% summarise(n=length(x), total=nrow(.)) %>%
+      mutate(x=paste0(x, ": ", n, " (", sprintf("%.0f%%", n/total*100), ")")) %>%
+      pull(x),
+    collapse=", "
+  )
+  if (na.rm && na_count > 0){
+    result <- paste0(result, " (", na_count, " NA ignored)")
+  }
+  return(result)
+}
 
 describe_flags <- function(true_value=T, na.rm=F, ...) {
   x <- list(...)
@@ -89,7 +96,7 @@ stopifnot(
 )
 stopifnot(
   describe_values(c("m", "m", "w", NA), na.rm=T) ==
-    "m: 2 (67%), w: 1 (33%)"
+    "m: 2 (67%), w: 1 (33%) (1 NA ignored)"
 )
 stopifnot(
   describe_flags("Ja", Eigenschaft1=c("Ja", "Nein"), Eigenschaft2=c("Ja", "Ja"))
